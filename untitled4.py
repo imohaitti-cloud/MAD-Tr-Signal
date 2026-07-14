@@ -8,7 +8,7 @@ import datetime
 import pytz
 import time
 
-TOKEN = "8842616064:AAEwDgWLmufrPcsvOoB-LNXIOL2O2dXehB8"
+TOKEN = "8842616064:AAGD9riGS8YXB7P_zOOUBRyBY-uTnzvqr10"
 bot = telebot.TeleBot(TOKEN)
 
 def get_jeddah_time():
