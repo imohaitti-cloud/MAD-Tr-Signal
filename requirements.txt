@@ -1,4 +1,2 @@
-telebot
+pyTelegramBotAPI
 tradingview-ta
-flask
-gunicorn
