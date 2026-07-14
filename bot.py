@@ -31,14 +31,13 @@ def get_signal(chat_id, symbol):
         mov = analysis.moving_averages['RECOMMENDATION']
 
         if osc == "BUY" and mov == "BUY":
-            bot.send_message(chat_id, f"MADTrSignal 🚀\n📊 {symbol}\n🟢 إشارة شراء قوية (Strong Buy)")
+            bot.send_message(chat_id, f"MADTrSignal 🚀\n📊 {symbol}\n🟢 إشارة قوية للشراء (Strong Buy)")
         elif osc == "SELL" and mov == "SELL":
-            bot.send_message(chat_id, f"MADTrSignal 🚀\n📊 {symbol}\n🔴 إشارة بيع قوية (Strong Sell)")
+            bot.send_message(chat_id, f"MADTrSignal 🚀\n📊 {symbol}\n🔴 إشارة قوية للبيع (Strong Sell)")
         else:
-            bot.send_message(chat_id, f"📊 {symbol}\n⚠️ لا توجد إشارة واضحة حالياً، جرب الضغط مرة أخرى.")
+            bot.send_message(chat_id, f"📊 {symbol}\n⚠️ لا توجد إشارة واضحة (السوق متذبذب).")
     except Exception as e:
-        bot.send_message(chat_id, "⚠️ خطأ في جلب البيانات، يرجى المحاولة لاحقاً.")
-
+        bot.send_message(chat_id, f"⚠️ خطأ الاتصال: {str(e)[:50]}")
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
