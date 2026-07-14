@@ -1,3 +1,4 @@
-pyTelegramBotAPI
+telebot
 tradingview-ta
 flask
+gunicorn
