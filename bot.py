@@ -3,6 +3,7 @@ from telebot import types
 from tradingview_ta import TA_Handler, Interval
 from flask import Flask
 from threading import Thread
+import time
 
 TOKEN = "8842616064:AAGD9riGS8YXB7P_zOOUBRyBY-uTnzvqr10"
 bot = telebot.TeleBot(TOKEN)
@@ -16,15 +17,21 @@ SYMBOLS_DISPLAY = {
 }
 
 def get_analysis(symbol):
-    try:
-        handler = TA_Handler(symbol=symbol, screener="forex", exchange="FOREX", interval=Interval.INTERVAL_1_MINUTE)
-        analysis = handler.get_analysis()
-        osc = analysis.oscillators['RECOMMENDATION']
-        mov = analysis.moving_averages['RECOMMENDATION']
-        if osc == "BUY" and mov == "BUY": return "🟢 CALL UP ⬆️"
-        elif osc == "SELL" and mov == "SELL": return "🔴 PUT DOWN ⬇️"
-        else: return "⚪ NEUTRAL"
-    except: return "⏳ جاري التحديث..."
+    # محاولة الحصول على البيانات 3 مرات قبل الاستسلام
+    for i in range(3):
+        try:
+            handler = TA_Handler(symbol=symbol, screener="forex", exchange="FOREX", interval=Interval.INTERVAL_1_MINUTE)
+            analysis = handler.get_analysis()
+            osc = analysis.oscillators['RECOMMENDATION']
+            mov = analysis.moving_averages['RECOMMENDATION']
+            
+            if osc == "BUY" and mov == "BUY": return "🟢 CALL UP ⬆️"
+            elif osc == "SELL" and mov == "SELL": return "🔴 PUT DOWN ⬇️"
+            else: return "⚪ NEUTRAL"
+        except:
+            time.sleep(0.5) # انتظار نصف ثانية بين كل محاولة
+            continue
+    return "⚪ NEUTRAL (لا يوجد اتجاه واضح)"
 
 app = Flask(__name__)
 @app.route('/')
@@ -41,7 +48,7 @@ def start(message):
 def callback(call):
     signal = get_analysis(call.data)
     
-    # التنسيق الذي طلبته تماماً
+    # التنسيق الذي طلبته
     msg = (
         f"MAD Tr\n"
         f"📊 {call.data}\n"
