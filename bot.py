@@ -1,4 +1,3 @@
-import os
 import telebot
 from telebot import types
 from tradingview_ta import TA_Handler, Interval
@@ -8,7 +7,13 @@ from threading import Thread
 TOKEN = "8842616064:AAGD9riGS8YXB7P_zOOUBRyBY-uTnzvqr10"
 bot = telebot.TeleBot(TOKEN)
 
-SYMBOLS_LIST = ["AUDCHF", "CADCHF", "CHFJPY", "EURUSD", "EURJPY", "AUDUSD", "USDCHF", "EURAUD", "AUDJPY", "CADJPY", "EURCHF", "USDJPY", "AUDCAD"]
+SYMBOLS_DISPLAY = {
+    "AUD/CHF 🇦🇺🇨🇭": "AUDCHF", "CAD/CHF 🇨🇦🇨🇭": "CADCHF", "CHF/JPY 🇨🇭🇯🇵": "CHFJPY",
+    "EUR/USD 🇪🇺🇺🇸": "EURUSD", "EUR/JPY 🇪🇺🇯🇵": "EURJPY", "AUD/USD 🇦🇺🇺🇸": "AUDUSD",
+    "USD/CHF 🇺🇸🇨🇭": "USDCHF", "EUR/AUD 🇪🇺🇦🇺": "EURAUD", "AUD/JPY 🇦🇺🇯🇵": "AUDJPY",
+    "CAD/JPY 🇨🇦🇯🇵": "CADJPY", "EUR/CHF 🇪🇺🇨🇭": "EURCHF", "USD/JPY 🇺🇸🇯🇵": "USDJPY",
+    "AUD/CAD 🇦🇺🇨🇦": "AUDCAD"
+}
 
 def get_analysis(symbol):
     try:
@@ -28,16 +33,26 @@ def home(): return "Bot is running!"
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    buttons = [types.InlineKeyboardButton(text=s, callback_data=s) for s in SYMBOLS_LIST]
+    buttons = [types.InlineKeyboardButton(text=name, callback_data=symbol) for name, symbol in SYMBOLS_DISPLAY.items()]
     markup.add(*buttons)
     bot.send_message(message.chat.id, "🚀 اختر سوقاً للتحليل:", reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback(call):
     signal = get_analysis(call.data)
+    
+    # التنسيق الذي طلبته تماماً
+    msg = (
+        f"MAD Tr\n"
+        f"📊 {call.data}\n"
+        f"⌛️ 1 Minutes\n"
+        f"{signal}"
+    )
+    
     bot.answer_callback_query(call.id, f"{call.data}: {signal}")
-    bot.edit_message_text(f"📊 {call.data}\n🎯 {signal}", call.message.chat.id, call.message.message_id, reply_markup=call.message.reply_markup)
+    bot.edit_message_text(msg, call.message.chat.id, call.message.message_id, reply_markup=call.message.reply_markup)
 
 if __name__ == "__main__":
     Thread(target=lambda: app.run(host='0.0.0.0', port=8080)).start()
+    bot.remove_webhook()
     bot.infinity_polling(none_stop=True)
