@@ -15,25 +15,27 @@ def get_jeddah_time():
     jeddah_tz = pytz.timezone('Asia/Riyadh')
     return datetime.datetime.now(jeddah_tz).strftime("%I:%M:%S %p")
 
-# القائمة الأساسية للتحليل (بدون أعلام لضمان دقة السحب)
+# قمنا بتغيير الـ exchange إلى FX_IDC لأنه أكثر توافقاً مع جميع الأزواج
 SYMBOLS_LIST = [
     "AUDCHF", "CADCHF", "CHFJPY", "EURUSD", "EURJPY", 
     "AUDUSD", "USDCHF", "EURAUD", "AUDJPY", "CADJPY", 
     "EURCHF", "USDJPY", "AUDCAD"
 ]
 is_auto_running = True 
-MY_CHAT_ID = "ضع_رقم_الـ_ID_هنا" 
+MY_CHAT_ID = "8842616064" 
 
 def get_analysis(symbol):
     try:
-        handler = TA_Handler(symbol=symbol, screener="forex", exchange="OANDA", interval=Interval.INTERVAL_1_MINUTE)
+        # التعديل هنا: استخدام FX_IDC بدلاً من OANDA
+        handler = TA_Handler(symbol=symbol, screener="forex", exchange="FX_IDC", interval=Interval.INTERVAL_1_MINUTE)
         analysis = handler.get_analysis()
         osc = analysis.oscillators['RECOMMENDATION']
         mov = analysis.moving_averages['RECOMMENDATION']
         if osc == "BUY" and mov == "BUY": return "🟢 CALL UP ⬆️"
         elif osc == "SELL" and mov == "SELL": return "🔴 PUT DOWN ⬇️"
         else: return "⚪ NEUTRAL"
-    except: return "ERROR"
+    except Exception as e:
+        return f"ERROR ({symbol})" # لمعرفة أي عملة تسبب المشكلة بالضبط
 
 app = Flask(__name__)
 @app.route('/')
@@ -45,7 +47,7 @@ def auto_monitor():
         if is_auto_running:
             for symbol in SYMBOLS_LIST:
                 signal = get_analysis(symbol)
-                if signal in ["🟢 CALL UP ⬆️", "🔴 PUT DOWN ⬇️"]:
+                if "CALL" in signal or "PUT" in signal:
                     text = f"🤖 Auto Signal\n📊 {symbol}\n⏰ {get_jeddah_time()}\n⏳ 1 Minute\n🎯 {signal}"
                     try: bot.send_message(MY_CHAT_ID, text)
                     except: pass
@@ -55,13 +57,11 @@ def auto_monitor():
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    # قائمة الأزرار مع الأعلام
     buttons_text = [
         "AUDCHF 🇦🇺🇨🇭", "CADCHF 🇨🇦🇨🇭", "CHFJPY 🇨🇭🇯🇵", "EURUSD 🇪🇺🇺🇸", 
         "EURJPY 🇪🇺🇯🇵", "AUDUSD 🇦🇺🇺🇸", "USDCHF 🇺🇸🇨🇭", "EURAUD 🇪🇺🇦🇺", 
         "AUDJPY 🇦🇺🇯🇵", "CADJPY 🇨🇦🇯🇵", "EURCHF 🇪🇺🇨🇭", "USDJPY 🇺🇸🇯🇵", "AUDCAD 🇦🇺🇨🇦"
     ]
-    # هنا الكود يأخذ اسم العملة فقط من النص (تجاهل العلم) ليعمل التحليل
     buttons = [types.InlineKeyboardButton(text=t, callback_data=t.split()[0]) for t in buttons_text]
     markup.add(*buttons)
     bot.send_message(message.chat.id, "🚀 اختر سوقاً للتحليل اللحظي:", reply_markup=markup)
